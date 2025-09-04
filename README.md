@@ -31,7 +31,7 @@ Welcome to the Mesh Bot project! This feature-rich bot is designed to enhance yo
 - **New Node Hello**: Send a hello to any new node seen in text message.
 
 ### Interactive AI and Data Lookup
-- **NOAA location Data**: Get localized weather(alerts), River Flow, and Tide information. Open-Meteo is used for wx only outside NOAA coverage. 
+- **NOAA/USGS location Data**: Get localized weather(alerts), Earthquake, River Flow, and Tide information. Open-Meteo is used for wx only outside NOAA coverage. 
 - **Wiki Integration**: Look up data using Wikipedia results.
 - **Ollama LLM AI**: Interact with the [Ollama](https://github.com/ollama/ollama/tree/main/docs) LLM AI for advanced queries and responses.
 - **Satalite Pass Info**: Get passes for satalite at your location.
@@ -72,23 +72,98 @@ Welcome to the Mesh Bot project! This feature-rich bot is designed to enhance yo
 ## Getting Started
 This project is developed on Linux (specifically a Raspberry Pi) but should work on any platform where the [Meshtastic protobuf API](https://meshtastic.org/docs/software/python/cli/) modules are supported, and with any compatible [Meshtastic](https://meshtastic.org/docs/getting-started/) hardware. For pico or low-powered devices, see projects for embedding, [buildroot](https://github.com/buildroot-meshtastic/buildroot-meshtastic), also see [femtofox](https://github.com/noon92/femtofox). 🥔 Please use responsibly and follow local rulings for such equipment. This project captures packets, logs them, and handles over the air communications which can include PII such as GPS locations.
 
-### Installation
-
+### Quick Setup 
 #### Clone the Repository
 If you dont have git you will need it `sudo apt-get install git`
 ```sh
 git clone https://github.com/spudgunman/meshing-around
 ```
-The code is under active development, so make sure to pull the latest changes regularly!
-
-#### Quick setup
 - **Automated Installation**: `install.sh` will automate optional venv and requirements installation.
 - **Launch Script**: `launch.sh` only used in a venv install, to launch the bot and the report generator.
 
-#### Docker Installation
+## Full list of commands for the bot
+
+### Networking
+| Command | Description | ✅ Works Off-Grid |
+|---------|-------------|-
+| `ping`, `ack` | Return data for signal. Example: `ping 15 #DrivingI5` (activates auto-ping every 20 seconds for count 15 via DM only) | ✅ |
+| `cmd` | Returns the list of commands (the help message) | ✅ |
+| `history` | Returns the last commands run by user(s) | ✅ |
+| `lheard` | Returns the last 5 heard nodes with SNR. Can also use `sitrep` | ✅ |
+| `motd` | Displays the message of the day or sets it. Example: `motd $New Message Of the day` | ✅ |
+| `sysinfo` | Returns the bot node telemetry info | ✅ |
+| `test` | used to test the limits of data transfer `test 4` sends data to the maxBuffer limit (default 220) via DM only | ✅ |
+| `whereami` | Returns the address of the sender's location if known |
+| `whoami` | Returns details of the node asking, also returned when position exchanged 📍 | ✅ |
+| `whois` | Returns details known about node, more data with bbsadmin node | ✅ |
+
+### Radio Propagation & Weather Forcasting
+| Command | Description | |
+|---------|-------------|-------------------
+| `ea` and `ealert` | Return FEMA iPAWS/EAS alerts in USA or DE Headline or expanded details for USA | |
+| `earthquake` | Returns the largest and number of USGS events for the location | |
+| `hfcond` | Returns a table of HF solar conditions | |
+| `rlist` | Returns a table of nearby repeaters from RepeaterBook | |
+| `riverflow` | Return information from NOAA for river flow info. Example: `riverflow modules/settings.py`| |
+| `solar` | Gives an idea of the x-ray flux | |
+| `sun` and `moon` | Return info on rise and set local time | ✅ |
+| `tide` | Returns the local tides (NOAA data source) | |
+| `valert` | Returns USGS Volcano Data | |
+| `wx` | Return local weather forecast, NOAA or Open Meteo (which also has `wxc` for metric and imperial) | |
+| `wxa` and `wxalert` | Return NOAA alerts. Short title or expanded details | |
+| `mwx` | Return the NOAA Coastal Marine Forcast data | |
+
+### Bulletin Board & Mail
+| Command | Description | |
+|---------|-------------|-
+| `bbshelp` | Returns the following help message | ✅ |
+| `bbslist` | Lists the messages by ID and subject | ✅ |
+| `bbsread` | Reads a message. Example: `bbsread #1` | ✅ |
+| `bbspost` | Posts a message to the public board or sends a DM(Mail) Examples: `bbspost $subject #message`, `bbspost @nodeNumber #message`, `bbspost @nodeShortName #message` | ✅ |
+| `bbsdelete` | Deletes a message. Example: `bbsdelete #4` | ✅ |
+| `bbsinfo` | Provides stats on BBS delivery and messages (sysop) | ✅ |
+| `bbslink` | Links Bulletin Messages between BBS Systems | ✅ |
+| `email:`  | Sends email to address on file for the node or `email: bob@test.net # hello from mesh` | |
+| `sms:`    | Send sms-email to multiple address on file | |
+| `setemail`| Sets the email for easy communciations | |
+| `setsms` | Adds the SMS-Email for quick communications | |
+| `clearsms` | Clears all SMS-Emails on file for node | |
+
+### Data Lookup 
+| Command | Description | |
+|---------|-------------|-
+| `askai` and `ask:` | Ask Ollama LLM AI for a response. Example: `askai what temp do I cook chicken` | ✅ |
+| `messages` | Replays the last messages heard, like Store and Forward | ✅ |
+| `readnews` | returns the contents of a file (news.txt, by default) via the chunker on air | ✅ |
+| `satpass` | returns the pass info from API for defined NORAD ID in config or Example: `satpass 25544,33591`| |
+| `wiki:` | Searches Wikipedia and returns the first few sentences of the first result if a match. Example: `wiki: lora radio` |
+
+### CheckList
+| Command | Description | |
+|---------|-------------|-
+| `checkin` | Check in the node to the checklist database, you can add a note like `checkin ICO` or `checkin radio4` | ✅ |
+| `checkout` | Checkout the node in the checklist database, checkout all from node | ✅ |
+| `checklist` | Display the checklist database, with note | ✅ |
+
+### Games (via DM only)
+| Command | Description | |
+|---------|-------------|-
+| `blackjack` | Plays Blackjack (Casino 21) | ✅ |
+| `dopewars` | Plays the classic drug trader game | ✅ |
+| `golfsim` | Plays a 9-hole Golf Simulator | ✅ |
+| `hamtest` | FCC/ARRL Quiz `hamtest general` or `hamtest extra` and `score` | ✅ |
+| `hangman` | Plays the classic word guess game | ✅ |
+| `joke` | Tells a joke | ✅ |
+| `lemonstand` | Plays the classic Lemonade Stand finance game | ✅ |
+| `mastermind` | Plays the classic code-breaking game | ✅ |
+| `videopoker` | Plays basic 5-card hold Video Poker | ✅ |
+
+## Other Install Options
+
+### Docker Installation - handy for windows
 See further info on the [docker.md](script/docker/README.md)
 
-#### Manual Install
+### Manual Install
 Install the required dependencies using pip:
 ```sh
 pip install -r requirements.txt
@@ -137,6 +212,7 @@ defaultChannel = 0
 ignoreDefaultChannel = False # ignoreDefaultChannel, the bot will ignore the default channel set above
 ignoreChannels = # ignoreChannels is a comma separated list of channels to ignore, e.g. 4,5
 cmdBang = False # require ! to be the first character in a command
+explicitCmd = True # require explicit command, the message will only be processed if it starts with a command word disable to get more activity
 ```
 
 ### Location Settings
@@ -148,6 +224,12 @@ enabled = True
 lat = 48.50
 lon = -123.0
 UseMeteoWxAPI = True
+
+coastalEnabled = False # NOAA Coastal Data Enable NOAA Coastal Waters Forecasts and Tide
+# Find the correct costal weather directory at https://tgftp.nws.noaa.gov/data/forecasts/marine/coastal/
+# this map can help https://www.weather.gov/marine select location and then look at the 'Forecast-by-Zone Map'
+myCoastalZone = https://tgftp.nws.noaa.gov/data/forecasts/marine/coastal/pz/pzz135.txt # myCoastalZone is the .txt file with the forecast data
+coastalForecastDays = 3 # number of data points to return, default is 3
 ```
 
 ### Module Settings
@@ -250,7 +332,7 @@ Volcano Alerts use lat/long to determine ~1000km radius
 ```ini
 [location]
 # USGS Hydrology unique identifiers, LID or USGS ID https://waterdata.usgs.gov
-riverListDefault = 14144700
+riverList = 14144700 # example Mouth of Columbia River
 
 # USGS Volcano alerts Enable USGS Volcano Alert Broadcast
 volcanoAlertBroadcastEnabled = False
@@ -267,12 +349,12 @@ repeater_channels = [2, 3]
 ```
 
 ### Ollama (LLM/AI) Settings
-For Ollama to work, the command line `ollama run 'model'` needs to work properly. Ensure you have enough RAM and your GPU is working as expected. The default model for this project is set to `gemma2:2b`. Ollama can be remote [Ollama Server](https://github.com/ollama/ollama/blob/main/docs/faq.md#how-do-i-configure-ollama-server) works on a pi58GB with 40 second or less response time.
+For Ollama to work, the command line `ollama run 'model'` needs to work properly. Ensure you have enough RAM and your GPU is working as expected. The default model for this project is set to `gemma3:270m`. Ollama can be remote [Ollama Server](https://github.com/ollama/ollama/blob/main/docs/faq.md#how-do-i-configure-ollama-server) works on a pi58GB with 40 second or less response time.
 
 ```ini
 # Enable ollama LLM see more at https://ollama.com
 ollama = True # Ollama model to use (defaults to gemma2:2b)
-ollamaModel = gemma2 #ollamaModel = llama3.1
+ollamaModel = gemma3:latest # Ollama model to use (defaults to gemma3:270m)
 ollamaHostName = http://localhost:11434 # server instance to use (defaults to local machine install)
 ```
 
@@ -280,6 +362,9 @@ Also see `llm.py` for changing the defaults of:
 
 ```ini
 # LLM System Variables
+rawQuery = True # if True, the input is sent raw to the LLM if False, it is processed by the meshBotAI template
+
+# Used in the meshBotAI template (legacy)
 llmEnableHistory = True # enable history for the LLM model to use in responses adds to compute time
 llmContext_fromGoogle = True # enable context from google search results helps with responses accuracy
 googleSearchResults = 3 # number of google search results to include in the context more results = more compute time
@@ -391,81 +476,6 @@ bbslink_whitelist = # list of whitelisted nodes numbers ex: 2813308004,425867530
 There is no direct support for MQTT in the code, however, reports from Discord are that using [meshtasticd](https://meshtastic.org/docs/hardware/devices/linux-native-hardware/) with no radio and attaching the bot to the software node, which is MQTT-linked, allows routing. Tested working fully Firmware:2.5.15.79da236 with [mosquitto](https://meshtastic.org/docs/software/integrations/mqtt/mosquitto/).
 
 ~~There also seems to be a quicker way to enable MQTT by having your bot node with the enabled [serial](https://meshtastic.org/docs/configuration/module/serial/) module with echo enabled and MQTT uplink and downlink. These two~~ 
-
-## Full list of commands for the bot
-
-### Networking
-| Command | Description | ✅ Works Off-Grid |
-|---------|-------------|-
-| `ping`, `ack` | Return data for signal. Example: `ping 15 #DrivingI5` (activates auto-ping every 20 seconds for count 15) | ✅ |
-| `cmd` | Returns the list of commands (the help message) | ✅ |
-| `history` | Returns the last commands run by user(s) | ✅ |
-| `lheard` | Returns the last 5 heard nodes with SNR. Can also use `sitrep` | ✅ |
-| `motd` | Displays the message of the day or sets it. Example: `motd $New Message Of the day` | ✅ |
-| `sysinfo` | Returns the bot node telemetry info | ✅ |
-| `test` | used to test the limits of data transfer `test 4` sends data to the maxBuffer limit (default 220) | ✅ |
-| `whereami` | Returns the address of the sender's location if known |
-| `whoami` | Returns details of the node asking, also returned when position exchanged 📍 | ✅ |
-| `whois` | Returns details known about node, more data with bbsadmin node | ✅ |
-
-### Radio Propagation & Weather Forcasting
-| Command | Description | |
-|---------|-------------|-------------------
-| `ea` and `ealert` | Return FEMA iPAWS/EAS alerts in USA or DE Headline or expanded details for USA | |
-| `hfcond` | Returns a table of HF solar conditions | |
-| `rlist` | Returns a table of nearby repeaters from RepeaterBook | |
-| `riverflow` | Return information from NOAA for river flow info. Example: `riverflow modules/settings.py`| |
-| `solar` | Gives an idea of the x-ray flux | |
-| `sun` and `moon` | Return info on rise and set local time | ✅ |
-| `tide` | Returns the local tides (NOAA data source) | |
-| `valert` | Returns USGS Volcano Data | |
-| `wx` and `wxc` | Return local weather forecast (wxc is metric value), NOAA or Open Meteo for weather forecasting | |
-| `wxa` and `wxalert` | Return NOAA alerts. Short title or expanded details | |
-
-### Bulletin Board & Mail
-| Command | Description | |
-|---------|-------------|-
-| `bbshelp` | Returns the following help message | ✅ |
-| `bbslist` | Lists the messages by ID and subject | ✅ |
-| `bbsread` | Reads a message. Example: `bbsread #1` | ✅ |
-| `bbspost` | Posts a message to the public board or sends a DM(Mail) Examples: `bbspost $subject #message`, `bbspost @nodeNumber #message`, `bbspost @nodeShortName #message` | ✅ |
-| `bbsdelete` | Deletes a message. Example: `bbsdelete #4` | ✅ |
-| `bbsinfo` | Provides stats on BBS delivery and messages (sysop) | ✅ |
-| `bbslink` | Links Bulletin Messages between BBS Systems | ✅ |
-| `email:`  | Sends email to address on file for the node or `email: bob@test.net # hello from mesh` | |
-| `sms:`    | Send sms-email to multiple address on file | |
-| `setemail`| Sets the email for easy communciations | |
-| `setsms` | Adds the SMS-Email for quick communications | |
-| `clearsms` | Clears all SMS-Emails on file for node | |
-
-### Data Lookup 
-| Command | Description | |
-|---------|-------------|-
-| `askai` and `ask:` | Ask Ollama LLM AI for a response. Example: `askai what temp do I cook chicken` | ✅ |
-| `messages` | Replays the last messages heard, like Store and Forward | ✅ |
-| `readnews` | returns the contents of a file (news.txt, by default) via the chunker on air | ✅ |
-| `satpass` | returns the pass info from API for defined NORAD ID in config or Example: `satpass 25544,33591`| |
-| `wiki:` | Searches Wikipedia and returns the first few sentences of the first result if a match. Example: `wiki: lora radio` |
-
-### CheckList
-| Command | Description | |
-|---------|-------------|-
-| `checkin` | Check in the node to the checklist database, you can add a note like `checkin ICO` or `checkin radio4` | ✅ |
-| `checkout` | Checkout the node in the checklist database, checkout all from node | ✅ |
-| `checklist` | Display the checklist database, with note | ✅ |
-
-### Games (via DM)
-| Command | Description | |
-|---------|-------------|-
-| `blackjack` | Plays Blackjack (Casino 21) | ✅ |
-| `dopewars` | Plays the classic drug trader game | ✅ |
-| `golfsim` | Plays a 9-hole Golf Simulator | ✅ |
-| `hamtest` | FCC/ARRL Quiz `hamtest general` or `hamtest extra` and `score` | ✅ |
-| `hangman` | Plays the classic word guess game | ✅ |
-| `joke` | Tells a joke | ✅ |
-| `lemonstand` | Plays the classic Lemonade Stand finance game | ✅ |
-| `mastermind` | Plays the classic code-breaking game | ✅ |
-| `videopoker` | Plays basic 5-card hold Video Poker | ✅ |
 
 # Recognition
 

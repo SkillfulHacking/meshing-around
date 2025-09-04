@@ -1,0 +1,59 @@
+# Ignore version control
+.git
+.gitignore
+.gitattributes
+
+# Ignore documentation files
+README.md
+*.md
+
+# Ignore CI/CD files
+.github/
+
+# Ignore temporary files
+*.tmp
+*.temp
+*~
+
+# Ignore logs and data directories content but keep the directories
+logs/*
+!logs/.gitkeep
+!logs/README.md
+data/*
+!data/.gitkeep
+!data/README.md
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Ignore virtual environments
+venv/
+env/
+ENV/
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore config files that might contain secrets
+config.ini
+*.key
+*.pem
+*.crt
+
+# Ignore test files
+*test*
+*Test*
