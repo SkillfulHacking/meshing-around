@@ -1,38 +1,69 @@
+version: '3.8'
+
 services:
   meshing-around:
     build: 
       context: ../..
+      dockerfile: Dockerfile
+    container_name: meshing-around-bot
+    restart: unless-stopped
     depends_on:
       ollama:
         condition: service_healthy
     devices:
-      - /dev/ttyAMA10 # Replace this with your actual device!
-    configs:
-      - source: me_config
-        target: /app/config.ini
+      - /dev/ttyAMA10:/dev/ttyAMA10 # Replace this with your actual device!
+    volumes:
+      # Mount config file
+      - ./config.ini:/app/config.ini:ro
+      # Mount data and logs directories for persistence
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - TZ=America/Los_Angeles
+      - PYTHONUNBUFFERED=1
+    networks:
+      - meshing-network
     extra_hosts:
       - "host.docker.internal:host-gateway" # Used to access a local linux meshtasticd device via tcp
+    healthcheck:
+      test: ["CMD", "ps", "aux", "|", "grep", "-q", "python.*mesh_bot.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   ollama:
     image: ollama/ollama:0.5.1
+    container_name: ollama-ai
     volumes:
-      - ./ollama:/root/.ollama
-      - ./ollama-entrypoint.sh:./entrypoint.sh
-    container_name: ollama
-    pull_policy: always
+      - ollama_data:/root/.ollama
+      - ./ollama-entrypoint.sh:/entrypoint.sh:ro
+    restart: unless-stopped
     tty: true
-    restart: always
-    entrypoint: 
-      - /usr/bin/bash
-      - /script/docker/entrypoint.sh
-    expose:
-      - 11434
+    stdin_open: true
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - meshing-network
+    ports:
+      - "11434:11434"
     healthcheck:
-      test: "apt update && apt install curl -y && curl -f http://localhost:11434/api/tags | grep -q llama3.2:3b"
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags", "||", "exit", "1"]
       interval: 30s
       timeout: 10s
       retries: 20
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # Optional monitoring with node-exporter
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
+    container_name: node-exporter
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -43,10 +74,18 @@ services:
       - --path.sysfs=/host/sys
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
     restart: unless-stopped
-    expose:
-      - 9100
-    network_mode: host
-    pid: host
-configs:
-  me_config:
-    file: ./config.ini
+    ports:
+      - "9100:9100"
+    networks:
+      - meshing-network
+    profiles:
+      - monitoring
+
+networks:
+  meshing-network:
+    driver: bridge
+    name: meshing-network
+
+volumes:
+  ollama_data:
+    driver: local
