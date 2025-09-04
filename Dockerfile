@@ -1,7 +1,34 @@
-FROM python:3.13-slim
+FROM python:3.13-slim AS builder
 ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies including ca-certificates for SSL
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    ca-certificates \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Update ca-certificates and upgrade pip
+RUN update-ca-certificates && pip install --upgrade pip
+
+# Create a virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host pypi.python.org \
+    --trusted-host files.pythonhosted.org \
+    -r /tmp/requirements.txt
+
+# Production stage
+FROM python:3.13-slim AS production
+ENV PYTHONUNBUFFERED=1
+
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     gettext \
     tzdata \
@@ -9,7 +36,6 @@ RUN apt-get update && apt-get install -y \
     nano \
     ca-certificates \
     curl \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the locale default to en_US.UTF-8
@@ -19,36 +45,13 @@ RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
 ENV LANG="en_US.UTF-8"
 ENV TZ="America/Los_Angeles"
 
-# Update ca-certificates and upgrade pip
-RUN update-ca-certificates && pip install --upgrade pip
+# Copy the virtual environment from builder stage
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Copy requirements first for better Docker layer caching
-COPY requirements.txt /app/requirements.txt
-
-# Install core dependencies first with SSL bypass for CI/build environments  
-RUN pip install --no-cache-dir \
-    --timeout 300 \
-    --retries 3 \
-    --trusted-host pypi.org \
-    --trusted-host pypi.python.org \
-    --trusted-host files.pythonhosted.org \
-    meshtastic pubsub requests || \
-    (echo "Fallback to basic pip install" && pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org meshtastic pubsub requests)
-
-# Install additional dependencies
-RUN pip install --no-cache-dir \
-    --timeout 300 \
-    --retries 2 \
-    --trusted-host pypi.org \
-    --trusted-host pypi.python.org \
-    --trusted-host files.pythonhosted.org \
-    pyephem maidenhead beautifulsoup4 \
-    dadjokes geopy schedule wikipedia \
-    googlesearch-python || echo "Some optional packages failed to install"
-
-# Copy the rest of the application
+# Copy the application
 COPY . /app
 
 # Copy config template to config.ini if it doesn't exist
@@ -60,8 +63,10 @@ RUN chmod +x /app/script/docker/entrypoint.sh
 # Create necessary directories
 RUN mkdir -p /app/logs /app/data
 
-# Expose any needed ports (if applicable)
-# EXPOSE 8080
+# Create non-root user for security
+RUN groupadd -r meshbot && useradd -r -g meshbot meshbot
+RUN chown -R meshbot:meshbot /app
+USER meshbot
 
 # Health check to ensure the application is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
